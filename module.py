@@ -14,8 +14,8 @@ def iou(preds: torch.Tensor, labels: torch.Tensor):
     """
     preds = preds.view(-1)
     labels = labels.view(-1)
-    intersection = (preds * labels).sum()
-    union = preds.sum() + labels.sum()
+    intersection = (preds * labels).mean()
+    union = (preds + labels).mean()
     return intersection / union
 
 
