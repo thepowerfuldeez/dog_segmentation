@@ -1,6 +1,5 @@
 matplotlib
 easydict
-mmcv_full
 numpy
 albumentations
 termcolor
@@ -12,7 +11,10 @@ Cython
 tqdm
 attr
 ipython
-mmcv
 Pillow
 PyYAML
 scikit-image
+mmcv==1.5.2
+opencv-python-headless==4.1.2.30
+wandb==0.12.17
+pytorch_lightning

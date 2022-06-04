@@ -43,13 +43,14 @@ class SegmenterModule(pl.LightningModule):
         print('Missing Keys: ', missing_keys)
         print('Unexpected Keys: ', unexpected_keys)
         backbone_state_dict.update(pretrained_state_dict)
-        self.backbone.load_state_dict(backbone_state_dict, strict=False)
+        self.feature_extractor.load_state_dict(backbone_state_dict, strict=False)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.decoder_head.parameters(), lr=0.001)
-        # diffrent lr for feature extractor
-        optimizer_feature_extractor = torch.optim.Adam(self.feature_extractor.parameters(), lr=0.0001)
-        return [optimizer, optimizer_feature_extractor]
+        grouped_parameters = [
+            {"params": self.decoder_head.parameters(), 'lr': 0.001},
+            {"params": self.feature_extractor.parameters(), 'lr': 0.0001},
+        ]
+        return torch.optim.AdamW(grouped_parameters, lr=0.001)
 
     def forward(self, x):
         features = self.feature_extractor(x)
@@ -62,7 +63,7 @@ class SegmenterModule(pl.LightningModule):
         return iou_loss
 
     def compute_loss(self, y, y_hat):
-        bce_loss = F.binary_cross_entropy_with_logits(y_hat, y)
+        bce_loss = F.binary_cross_entropy_with_logits(y_hat, y.unsqueeze(1))
         iou_loss = self.compute_iou_loss(y_hat, y)
         return bce_loss * 0.5 + iou_loss * 0.5
 
@@ -83,10 +84,3 @@ class SegmenterModule(pl.LightningModule):
         self.log('val_loss', loss, on_step=False, on_epoch=True)
         self.log('val_iou', iou_value, on_step=False, on_epoch=True)
         return loss
-
-    def validation_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        avg_iou = torch.stack([x['val_iou'] for x in outputs]).mean()
-        self.log('val_loss', avg_loss, on_step=False, on_epoch=True)
-        self.log('val_iou', avg_iou, on_step=False, on_epoch=True)
-        return {'val_loss': avg_loss, 'val_iou': avg_iou}

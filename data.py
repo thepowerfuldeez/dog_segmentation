@@ -35,6 +35,7 @@ class SegmentationDataset(Dataset):
         if self.kind == "train":
             label = cv2.imread(str(self.img_list[idx].with_suffix(".png")), cv2.IMREAD_GRAYSCALE)
             transformed = self.transform(image=img, mask=label)
+            transformed['mask'] = (transformed['mask'] / 255).float()
         else:
             transformed = self.transform(image=img)
         return transformed
